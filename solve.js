@@ -1,15 +1,12 @@
 const fs = require('fs');
 
-const dictionary = JSON.parse(fs.readFileSync('./wordleDictionary.json', 'utf-8'));
-// const fiveLetterWords = dictionary.filter((word) => word.length === 5);
-
-const previousAnswers = fs.readFileSync('./previousAnswers.csv', 'utf-8').split('\r\n');
+let guessDictionary = JSON.parse(fs.readFileSync('./wordleDictionary.json', 'utf-8'));
 
 // possible answers are only at the end of the array, after "zymic"
-const answerStart = dictionary.indexOf('zymic');
-const answerDictionary = dictionary.slice(answerStart + 1);
+let answerDictionary = guessDictionary.slice(guessDictionary.indexOf('zymic') + 1);
 
-// remove previous answers from dictionary
+// remove previous answers from answerDictionary
+const previousAnswers = fs.readFileSync('./previousAnswers.csv', 'utf-8').split('\r\n');
 previousAnswers.forEach((answer) => {
   const index = answerDictionary.indexOf(answer);
   if (index > -1) {
@@ -17,49 +14,50 @@ previousAnswers.forEach((answer) => {
   }
 });
 
-console.log('Dictionary Length:', dictionary.length);
+let lettersGuessed = [];
+
+console.log('Guess Dictionary Length:', guessDictionary.length);
 console.log('Answer Dictionary Length:', answerDictionary.length);
 
-letterCounts = {};
+// letterResult(0, 'a', 'x');
+// letterResult(1, 'u', 'x');
+// letterResult(2, 'r', 'g');
+// letterResult(3, 'e', 'x');
+// letterResult(4, 'i', 'x');
 
-let currentDictionary = dictionary;
+guess(lettersGuessed);
 
-currentDictionary = letterResult(currentDictionary, 0, 's', 'x');
-currentDictionary = letterResult(currentDictionary, 1, 'a', 'x');
-currentDictionary = letterResult(currentDictionary, 2, 'i', 'x');
-currentDictionary = letterResult(currentDictionary, 3, 'n', 'x');
-currentDictionary = letterResult(currentDictionary, 4, 'e', 'y');
-
-// currentDictionary = letterResult(currentDictionary, 0, 'g', 'x');
-// currentDictionary = letterResult(currentDictionary, 1, 'r', 'y');
-// currentDictionary = letterResult(currentDictionary, 2, 'e', 'y');
-// currentDictionary = letterResult(currentDictionary, 3, 'a', 'x');
-// currentDictionary = letterResult(currentDictionary, 4, 't', 'x');
-
-guess(currentDictionary);
-
-function letterResult(currentDictionary, position, letter, color) {
+function letterResult(position, letter, color) {
+  lettersGuessed.push(letter);
   switch (color) {
     case 'x':
-      return grayLetter(currentDictionary, position, letter);
+      grayLetter(position, letter);
+      return;
     case 'y':
-      return yellowLetter(currentDictionary, position, letter);
+      yellowLetter(position, letter);
+      return;
     case 'g':
-      return greenLetter(currentDictionary, position, letter);
-  }
+      greenLetter(position, letter);
+      return;
+    default:
+      console.log('Invalid color');
+      process.exit(1);
+    }
 }
 
-function grayLetter(currentDictionary, position, letter) {
-  return removeWordsWithLetter(currentDictionary, letter);
+function grayLetter(position, letter) {
+  guessDictionary = removeWordsWithLetter(guessDictionary, letter);
+  answerDictionary = removeWordsWithLetter(answerDictionary, letter);
 }
 
-function yellowLetter(currentDictionary, position, letter) {
-  const tempDictionary = removeWordsWithoutLetter(currentDictionary, letter);
-  return removeWordsWithLetterAtPosition(tempDictionary, letter, position);
+function yellowLetter(position, letter) {
+  const tempGuessDictionary = removeWordsWithoutLetter(guessDictionary, letter);
+  guessDictionary = removeWordsWithLetterAtPosition(tempGuessDictionary, letter, position);
 }
 
-function greenLetter(currentDictionary, position, letter) {
-  return keepWordsWithLetterAtPosition(currentDictionary, letter, position);
+function greenLetter(position, letter) {
+  guessDictionary = keepWordsWithLetterAtPosition(guessDictionary, letter, position);
+  answerDictionary = keepWordsWithLetterAtPosition(answerDictionary, letter, position);
 }
 
 function removeWordsWithLetter(dictionary, letter) {
@@ -78,83 +76,110 @@ function keepWordsWithLetterAtPosition(dictionary, letter, position) {
   return dictionary.filter((word) => word.split('')[position] === letter);
 }
 
-function guess(dictionary) {
-
-  // determine letter frequency in the answer dictionary
-// ANSWER DICTIONARY NEEDS UPDATED TO REMOVE IMPOSSIBLE ANSWERS
-  answerDictionary.forEach((word) => {
-    const unique = [ ...new Set(word.split(''))];
-    unique.forEach((letter) => {
-      letterCounts[letter] = letterCounts[letter] ? letterCounts[letter] + 1 : 1;
-    });
-  });
-
-  // sum the values
-  const totalLetters = Object.values(letterCounts).reduce((a, b) => a + b, 0);
-
-  // assign letter scores
-  const letterScores = {};
-
-  Object.keys(letterCounts).forEach((letter) => {
-    letterScores[letter] = letterCounts[letter] / totalLetters;
-  });
-
-  ////////////////////////////////////////////////////////////////////////
-  // display letter scores
-  ////////////////////////////////////////////////////////////////////////
-  // convert opbect to array
-  let letterScoresArray = Object.entries(letterScores).map(([letter, score]) => {
-    return [ letter, (score * 100).toFixed(1) ];
-  });
-
-  // sort by count
-  letterScoresArray.sort(function(a, b) {
-    return b[1] - a[1];
-  });
-
-  letterScoresArray.forEach((letter) => {
-    console.log(letter);
-  });
-
-  ////////////////////////////////////////////////////////////////////////
-  // assign word scores
-  ////////////////////////////////////////////////////////////////////////
+function guess(matchedLetters) {
+  // for each word in the guess dictionary count the number of words that have matching letters in the answer dictionary
   const wordScores = [];
+  guessDictionary.forEach((word) => {
 
-  // start with the % chance of each letter being in other words
-  dictionary.forEach((word) => {
-    const unique = [ ...new Set(word.split(''))];
-    const score = unique.reduce((a, b) => a + letterScores[b], 0);
-    wordScores.push([ word, score ]);
-  });
+    let unique = [ ...new Set(word.split(''))];
 
-  // add the % chance of each letter being in each position
-  wordScores.forEach((wordScore) => {
-    const word = wordScore[0];
-    const letters = word.split('');
-    let count = 0;
-    // console.log(word);
-    letters.forEach((letter, index) => {
-      let matches = answerDictionary.filter((word) => word.split('')[index] === letter);
-      count += matches.length;
-      // console.log(matches.length);
-      // console.log(letter, count);
+    unique = unique.filter(x => !matchedLetters.includes(x));
+
+    const matches = answerDictionary.filter((answer) => {
+      return unique.reduce((a, b) => a || answer.includes(b), false);
     });
-    wordScore[2] = count/answerDictionary.length;
-    wordScore[3] = wordScore[2] + wordScore[1];
+
+    wordScores.push([word, matches.length]);
   });
 
-  // sort by score
-  wordScores.sort(function(a, b) {
-    return b[3] - a[3];
-  });
+  // sort by score descending
+  wordScores.sort((a, b) => b[1] - a[1]);
 
-  wordScores.slice(0, 40).forEach(word => {
+  wordScores.slice(0, 80).forEach(word => {
     possibleAnswer = answerDictionary.indexOf(word[0]) > -1 ? '*' : '';
     possibleAnswer = previousAnswers.indexOf(word[0]) > -1 ? '-' : possibleAnswer;
-    console.log(word[0], "\t", word[1].toFixed(4), word[2].toFixed(4), word[3].toFixed(4), possibleAnswer);
+    console.log(word[0], "\t", word[1], possibleAnswer);
   });
 }
+
+// function guess() {
+
+//   const letterCounts = {};
+
+//   // determine letter frequency in the answer dictionary
+//   answerDictionary.forEach((word) => {
+//     const unique = [ ...new Set(word.split(''))];
+//     unique.forEach((letter) => {
+//       letterCounts[letter] = letterCounts[letter] ? letterCounts[letter] + 1 : 1;
+//     });
+//   });
+
+//   // sum the values
+//   const totalLetters = Object.values(letterCounts).reduce((a, b) => a + b, 0);
+
+//   // assign letter scores
+//   const letterScores = {};
+
+//   Object.keys(letterCounts).forEach((letter) => {
+//     letterScores[letter] = letterCounts[letter];
+//   });
+
+//   ////////////////////////////////////////////////////////////////////////
+//   // display letter scores
+//   ////////////////////////////////////////////////////////////////////////
+//   // convert opbect to array
+//   let letterScoresArray = Object.entries(letterScores).map(([letter, score]) => {
+//     return [ letter, score ];
+//   });
+
+//   // sort by count
+//   letterScoresArray.sort(function(a, b) {
+//     return b[1] - a[1];
+//   });
+
+//   letterScoresArray.forEach((letter) => {
+//     console.log(letter);
+//   });
+
+//   ////////////////////////////////////////////////////////////////////////
+//   // assign word scores
+//   ////////////////////////////////////////////////////////////////////////
+//   const wordScores = [];
+
+//   // start with a point for each word each letter matches
+//   guessDictionary.forEach((word) => {
+//     const unique = [ ...new Set(word.split(''))];
+//     const score = unique.reduce((a, b) => a + letterScores[b], 0);
+//     wordScores.push([ word, score ]);
+//   });
+
+//   // // add the % chance of each letter being in each position
+//   // wordScores.forEach((wordScore) => {
+//   //   const word = wordScore[0];
+//   //   const letters = word.split('');
+//   //   let count = 0;
+//   //   // console.log(word);
+//   //   letters.forEach((letter, index) => {
+//   //     let matches = answerDictionary.filter((word) => word.split('')[index] === letter);
+//   //     count += matches.length;
+//   //     // console.log(matches.length);
+//   //     // console.log(letter, count);
+//   //   });
+//   //   wordScore[2] = count/answerDictionary.length;
+//   //   wordScore[3] = wordScore[2] + wordScore[1];
+//   // });
+
+//   // sort by score descending
+//   wordScores.sort(function(a, b) {
+//     return b[1] - a[1];
+//   });
+
+//   wordScores.slice(0, 40).forEach(word => {
+//     possibleAnswer = answerDictionary.indexOf(word[0]) > -1 ? '*' : '';
+//     possibleAnswer = previousAnswers.indexOf(word[0]) > -1 ? '-' : possibleAnswer;
+//     console.log(word[0], "\t", word[1], possibleAnswer);
+//   });
+// }
 
 
 
