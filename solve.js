@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs');
 
 let guessDictionary = JSON.parse(fs.readFileSync('./wordleDictionary.json', 'utf-8'));
@@ -7,6 +9,8 @@ let answerDictionary = guessDictionary.slice(guessDictionary.indexOf('zymic') + 
 
 // remove previous answers from answerDictionary
 const previousAnswers = fs.readFileSync('./previousAnswers.csv', 'utf-8').split('\r\n');
+// previousAnswers = [];
+
 previousAnswers.forEach((answer) => {
   const index = answerDictionary.indexOf(answer);
   if (index > -1) {
@@ -17,21 +21,23 @@ previousAnswers.forEach((answer) => {
 let anyMatch = [];
 let greenMatch = [];
 
-letterResult(0, 's', 'x');
-letterResult(1, 'a', 'x');
-letterResult(2, 'i', 'y');
-letterResult(3, 'n', 'y');
-letterResult(4, 'e', 'x');
+// letterResult(0, 's', 'x');
+// letterResult(1, 'a', 'y');
+// letterResult(2, 'i', 'x');
+// letterResult(3, 'n', 'x');
+// letterResult(4, 'e', 'y');
 
-// letterResult(0, 'd', 'x');
-// // letterResult(1, 'e', 'y');
-// letterResult(2, 't', 'x');
-// letterResult(3, 'e', 'g');
-// letterResult(4, 'r', 'g');
+// letterResult(0, 'r', 'y');
+// letterResult(1, 'e', 'g');
+// letterResult(2, 'l', 'x');
+// letterResult(3, 'a', 'y');
+// letterResult(4, 'y', 'x');
 
-// letterResult(0, 'l', 'y');
-// letterResult(1, 'o', 'x');
-// letterResult(2, 'v', 'x');
+// letterResult(0, 'm', 'x');
+// letterResult(1, 'o', 'g');
+// letterResult(2, 'l', 'x');
+// letterResult(3, 'd', 'x');
+// letterResult(4, 'y', 'g');
 
 guess(anyMatch, greenMatch);
 
