@@ -8,9 +8,12 @@ let guessDictionary = JSON.parse(fs.readFileSync('./wordleDictionary.json', 'utf
 let answerDictionary = guessDictionary.slice(guessDictionary.indexOf('zymic') + 1);
 
 // remove previous answers from answerDictionary
-const previousAnswers = fs.readFileSync('./previousAnswers.csv', 'utf-8').split('\r\n');
+const previousAnswers = fs.readFileSync('./previousAnswers.csv', 'utf-8').split('\n');
+// log previous answers
+// console.log('Previous Answers:', previousAnswers.join(', '));
 // previousAnswers = [];
 
+// remove previous answers from answerDictionary
 previousAnswers.forEach((answer) => {
   const index = answerDictionary.indexOf(answer);
   if (index > -1) {
@@ -22,21 +25,27 @@ let anyMatch = [];
 let greenMatch = [];
 
 // letterResult(0, 's', 'x');
-// letterResult(1, 'a', 'y');
+// letterResult(1, 'a', 'x');
 // letterResult(2, 'i', 'x');
-// letterResult(3, 'n', 'x');
-// letterResult(4, 'e', 'y');
+// letterResult(3, 'n', 'g');
+// letterResult(4, 'e', 'x');
 
-// letterResult(0, 'r', 'y');
-// letterResult(1, 'e', 'g');
-// letterResult(2, 'l', 'x');
-// letterResult(3, 'a', 'y');
-// letterResult(4, 'y', 'x');
-
-// letterResult(0, 'm', 'x');
+// letterResult(0, 'b', 'x');
 // letterResult(1, 'o', 'g');
-// letterResult(2, 'l', 'x');
-// letterResult(3, 'd', 'x');
+// letterResult(2, 'u', 'g');
+// letterResult(3, 'n', 'g');
+// letterResult(4, 'd', 'x');
+
+// letterResult(0, 'h', 'x');
+// letterResult(1, 'a', 'g');
+// letterResult(2, 'r', 'g');
+// letterResult(3, 'd', 'g');
+// letterResult(4, 'y', 'g');
+
+// letterResult(0, 's', 'g');
+// letterResult(1, 'a', 'g');
+// letterResult(2, 'u', 'x');
+// letterResult(3, 'c', 'x');
 // letterResult(4, 'y', 'g');
 
 guess(anyMatch, greenMatch);
@@ -146,7 +155,7 @@ function guess(anyMatch, greenMatch) {
     console.log('---------------------------');
   }
 
-  wordScores.slice(0, 20).forEach(word => {
+  wordScores.slice(0, 40).forEach(word => {
     possibleAnswer = answerDictionary.indexOf(word[0]) > -1 ? '*' : '';
     possibleAnswer = previousAnswers.indexOf(word[0]) > -1 ? '-' : possibleAnswer;
     console.log(word[0], word[1], word[2], possibleAnswer);
